@@ -4,48 +4,6 @@
 // contains instance of controller for each resource
 const controllers = {};
 
-// method for controllers which produces middleware
-// that is pluggable into express 
-function handle_action(action, configs) {
-
-  configs = configs || {};
-
-  // todo, allow configs but use sensible defaults,
-  // presently just assumes a json response and error logging
-  const on_response = configs.on_response || function (req, res, result) {
-
-    res.json(result);
-
-  };
-
-  const on_err = configs.on_err || function (req, res, err) {
-
-    console.error(err);
-
-    res.json(err);
-
-  };
-
-  return function (req, res) {
-
-    const params = req.method === "GET" ? req.query : req.body;
-
-    todo_controller[action](params)
-    .then(function (result) {
-
-      on_result(req, res, result);
-
-    })
-    .catch(function (err) {
-
-      on_err(req, res, result);
-
-    });
-
-  }
-
-}
-
 
 
 //// Perform Action ////
@@ -154,6 +112,7 @@ function define_action (resource_name, action_name, configs) {
 // configs {resource_name, actions, validator}
 function configure (params) {
 
+
   const resource_name = params.resource_name || null; 
 
   // if controller is already configured, just return it
@@ -191,6 +150,48 @@ function configure (params) {
 
   }
 
+  // method for controllers which produces middleware
+  // that is pluggable into express 
+  function handle_action(action, configs) {
+
+    configs = configs || {};
+
+    // allow hooks to be set for middleware 
+    const on_response = configs.on_response || function (req, res, result) {
+
+      res.json(result);
+
+    };
+
+    const on_err = configs.on_err || function (req, res, err) {
+
+      console.error(err);
+
+      res.json(err);
+
+    };
+
+    return function (req, res) {
+
+      const params = req.method === "GET" ? req.query : req.body;
+
+      controller[action](params)
+      .then(function (result) {
+
+        on_result(req, res, result);
+
+      })
+      .catch(function (err) {
+
+        on_err(req, res, result);
+
+      });
+
+    };
+
+  }
+
+  // append middleware generator to controller interface
   controller.actions.handle_action = handle_action;
   
   // console.log(controller);
