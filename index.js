@@ -4,11 +4,49 @@
 // contains instance of controller for each resource
 const controllers = {};
 
-// datasources used by controllers
-controllers.data_sources = {};
+// method for controllers which produces middleware
+// that is pluggable into express 
+function handle_action(action, configs) {
 
-// controllers actions 
-controllers.actions = {};
+  configs = configs || {};
+
+  // todo, allow configs but use sensible defaults,
+  // presently just assumes a json response and error logging
+  const on_response = configs.on_response || function (req, res, result) {
+
+    res.json(result);
+
+  };
+
+  const on_err = configs.on_err || function (req, res, err) {
+
+    console.error(err);
+
+    res.json(err);
+
+  };
+
+  return function (req, res) {
+
+    const params = req.method === "GET" ? req.query : req.body;
+
+    todo_controller[action](params)
+    .then(function (result) {
+
+      on_result(req, res, result);
+
+    })
+    .catch(function (err) {
+
+      on_err(req, res, result);
+
+    });
+
+  }
+
+}
+
+
 
 //// Perform Action ////
 const perform_action = async function (action_name, configs, params) {
@@ -103,10 +141,6 @@ function define_action (resource_name, action_name, configs) {
 
   controller.actions[action_name] = function (params) {
 
-    // for logging purposes. maybe look at an environment
-    // specific 'log_level' 
-    // console.log("performing " + action_name, params);
-
     return perform_action(action_name, configs, params);
 
   };
@@ -120,25 +154,31 @@ function define_action (resource_name, action_name, configs) {
 // configs {resource_name, actions, validator}
 function configure (params) {
 
-  const controller = {};
+  const resource_name = params.resource_name || null; 
+
+  // if controller is already configured, just return it
+  if (controllers[resource_name]) {
+
+    const controller = controllers[resource_name]; 
+
+    return controller.actions;
+
+  }
 
   params = params || {};
 
-  const resource_name = params.resource_name || null; 
-
-  controllers[resource_name] = controller;
+  const controller = {};
 
   if (resource_name === null) {
 
     throw new Error("resource name is required on controller configuration");
 
-    return;
-
   }
+
+  controllers[resource_name] = controller;
 
   controller.resource_name = resource_name;
 
-  // no actions are required for a controller.
   const actions = params.actions || {}; 
 
   controller.actions = {};
@@ -147,11 +187,11 @@ function configure (params) {
 
     var action_configs = actions[action_name];
 
-    // console.log(resource_name, action_name, action_configs);
-
     define_action(resource_name, action_name, action_configs);
 
   }
+
+  controller.actions.handle_action = handle_action;
   
   // console.log(controller);
   // the interface to the controller is its actions
