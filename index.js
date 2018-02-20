@@ -171,11 +171,20 @@ function configure (params) {
 
     };
 
+    if (!controller.actions[action]) {
+
+      throw Error([
+        action + " is not an action defined for", 
+        resource_name + " controller."
+      ].join(" "));
+
+    }
+
     return function (req, res) {
 
       const params = req.method === "GET" ? req.query : req.body;
 
-      controller[action](params)
+      controller.actions[action](params)
       .then(function (result) {
 
         on_result(req, res, result);
