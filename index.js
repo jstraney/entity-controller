@@ -192,7 +192,7 @@ function configure (params) {
       })
       .catch(function (err) {
 
-        on_err(req, res, result);
+        on_err(req, res, err);
 
       });
 
