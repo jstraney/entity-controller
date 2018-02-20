@@ -157,7 +157,7 @@ function configure (params) {
     configs = configs || {};
 
     // allow hooks to be set for middleware 
-    const on_response = configs.on_response || function (req, res, result) {
+    const on_result = configs.on_result || function (req, res, result) {
 
       res.json(result);
 
