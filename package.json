@@ -1,0 +1,27 @@
+{
+  "name": "entity-controller",
+  "version": "1.0.0",
+  "description": "general purpose entity controller which allows the injection of various hooks",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "create_test_logs": "if [ ! -d ./test/logs ]; then mkdir test/logs; fi",
+    "test": "npm run create_test_logs && node test/index.js | tee -a test/logs/$(date \"+%Y-%d-%m.log\")"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thrakish/entity-controller.git"
+  },
+  "keywords": [
+    "entity",
+    "controller"
+  ],
+  "author": "Jeff Straney <straneyjeff@gmail.com> (http://www.orlandowebspecialist.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thrakish/entity-controller/issues"
+  },
+  "homepage": "https://github.com/thrakish/entity-controller#readme"
+}
