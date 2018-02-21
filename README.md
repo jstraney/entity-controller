@@ -65,8 +65,8 @@ todo_controller.read({id: 2})
 It will change your life
 
 ### How do I use data from <mongo, mysql, redis, couch>?
-See examples in the code [example repository | https://github.com/thrakish/entity-controller-examples]
+See examples in the code [example repository](https://github.com/thrakish/entity-controller-examples)
 
 ### How do I use with <express, happi, ...>? 
-See examples in the code [example repository | https://github.com/thrakish/entity-controller-examples]
+See examples in the code [example repository](https://github.com/thrakish/entity-controller-examples)
 
