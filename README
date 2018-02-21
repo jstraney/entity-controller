@@ -6,8 +6,8 @@ library.
 ```js
 const controller = require('entity-controller');
 
-// raw, object literal data, but you could require mongoose, mysql, redis
-// assume each index serves as the todo's id.
+// raw, object literal data, but you could require mongoose, mysql, or redis
+// assume each arry index serves as the todo's id.
 const todos = [ 
   {task: "first things first"},
   {task: "do this secondly"},
@@ -33,6 +33,8 @@ const todo_controller = controller({
 
         const id = params.id;
 
+        // get todo in our array. could replace with a
+        // query to mongo, postgres, whatever 
         return  todos[id] || null;
 
       }
