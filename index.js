@@ -182,7 +182,24 @@ function configure (params) {
 
     return function (req, res) {
 
-      const params = req.method === "GET" ? req.query : req.body;
+      var params = {};
+
+      if (req.body && Object.keys(req.body).length) {
+
+        params = Object.assign(params, req.body);
+
+      }
+      // sometimes params and queries get used together
+      if (req.query && Object.keys(req.query).length) {
+
+        params = Object.assign(params, req.query);
+
+      }
+      if (req.params && typeof req.params == "object") {
+
+        params = Object.assign(params, req.params);
+
+      }
 
       controller.actions[action](params)
       .then(function (result) {
