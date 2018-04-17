@@ -180,7 +180,7 @@ function configure (params) {
 
     }
 
-    return function (req, res) {
+    return function (req, res, next) {
 
       var params = {};
 
@@ -212,6 +212,10 @@ function configure (params) {
         on_err(req, res, err);
 
       });
+
+      // supposed to be an endpoint in terms of response, but may
+      // pass on to middleware to upload files, cleanup something
+      next();
 
     };
 
