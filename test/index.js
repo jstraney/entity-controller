@@ -37,66 +37,70 @@ const users_data = {
 // each action is guaranteed to return a promise, as they are
 // treated as async when passed in.
 const user_controller = controller({
-  resource_name: "user",
-  actions: {
-    read: {
-      on_pre_validate: function (params) {
+  read: {
+    on_pre_validate: function (params) {
 
-        // derive parameters from input, just a non practical example
-        // but you could, take a hash of two submitted values
-        const hash = crypto.createHash("sha256");
+      // derive parameters from input, just a non practical example
+      // but you could, take a hash of two submitted values
+      const hash = crypto.createHash("sha256");
 
-        // note to noobs, this is not an encryption example
-        hash.update(params.email);
-        hash.update(crypto.randomBytes(32));
-        params.some_key = hash.digest("hex");
+      // note to noobs, this is not an encryption example
+      hash.update(params.email);
+      hash.update(crypto.randomBytes(32));
+      params.some_key = hash.digest("hex");
 
-      },
-      on_validate : function (params) {
+    },
+    on_validate : function (params) {
 
-        if (params.email.length > 30) {
+      if (params.email.length > 30) {
 
-          throw new Error("e-mail must be under 60 characters");
-
-        }
-
-      },
-      on_post_validate: function (params) {
-
-        assert(params.some_key, "params should have a new value set from pre_validate hook");
-
-        console.log(params.some_key);
-
-        // remove it if you want
-        delete params.some_key;
-
-      },
-      on_pre_query: function (params) {
-
-        assert(!params.some_key, "some_key should be removed form post_validate");
-
-        // you can transform params by reference
-        params.email = params.email.toLowerCase();
-
-      },
-      on_query: function (params) {
-
-        const email = params.email || null;
-
-        // don't forget to return results
-        return users_data[email];
+        throw new Error("e-mail must be under 60 characters");
 
       }
+
+      console.log('passed on_validate hook');
+
+    },
+    on_post_validate: function (params) {
+
+      assert(params.some_key, "params should have a new value set from pre_validate hook");
+
+      console.log('passed on_pre_validate hook');
+
+      // remove it if you want
+      delete params.some_key;
+
+    },
+    on_pre_query: function (params) {
+
+      assert(!params.some_key, "some_key should be removed from on_post_validate hook");
+
+      console.log('passed on_post_validate hook');
+
+      // you can transform params by reference
+      params.email = params.email.toLowerCase();
+
+    },
+    on_query: function (params) {
+
+      const email = params.email || null;
+
+      assert(email[0] == 't', 'email should be transformed lowercase by pre_query hook');
+
+      console.log('passed on_pre_query hook');
+
+      // don't forget to return results
+      return users_data[email];
+
     }
   }
 });
+
 
 (async function test_read () {
 
   // uppercase query is transformed by on_pre_query callback
   const test2 = await user_controller.read({email : "TEST2@gmail.com"});
-
-  console.log(test2);
 
   const tester = await user_controller.read({
       email : "TEST21312312412412411513513535131231@gmail.com"
@@ -106,5 +110,11 @@ const user_controller = controller({
     assert(err.constructor === Error, "query should throw error. email too long");
 
   });
+
+  assert(test2.favorite_color == 'blue', 'result should be returned from controller action');
+
+  console.log('action returns the result as expected');
+
+  console.log('all tests passed');
 
 })();
