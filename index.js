@@ -126,7 +126,7 @@ function configure (actions) {
 
     };
 
-    if (controller[action]) {
+    if (!controller[action]) {
 
       throw new Error(action + " is not an action defined for controller."); 
 
