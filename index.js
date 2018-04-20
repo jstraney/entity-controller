@@ -154,7 +154,7 @@ function configure (actions) {
 
       }
 
-      controller.actions[action](params)
+      controller[action](params)
       .then(function (result) {
 
         on_result(req, res, result);
