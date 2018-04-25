@@ -92,7 +92,7 @@ const user_controller = controller({
       // don't forget to return results
       return users_data[email];
 
-    }
+    },
   }
 });
 

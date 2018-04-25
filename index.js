@@ -117,6 +117,14 @@ function configure (actions) {
 
     };
 
+    // allow a function to be passed which is called on success. Assumed to be
+    // some background process that doesn't involve sending headers back to client
+    // for instance, you may want to save a file to your server only after a successful
+    // request from the client and a write to your DB. this callback will only have the
+    // request and the result sets from the action to prevent an error from resending
+    // the headers
+    const on_post_result = configs.on_post_result || null;
+
     // handle error as json response
     const on_err = configs.on_err || function (req, res, err) {
 
@@ -159,16 +167,15 @@ function configure (actions) {
 
         on_result(req, res, result);
 
+        // be sure to check for response sent.
+        on_post_result && on_post_result(req, result);
+
       })
       .catch(function (err) {
 
         on_err(req, res, err);
 
       });
-
-      // supposed to be an endpoint in terms of response, but may
-      // pass on to middleware to upload files, cleanup something
-      next();
 
     };
 
