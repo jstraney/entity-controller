@@ -38,7 +38,7 @@ const users_data = {
 // treated as async when passed in.
 const user_controller = controller({
   read: {
-    on_pre_validate: function (params) {
+    on_pre_validate: async function (params) {
 
       // derive parameters from input, just a non practical example
       // but you could, take a hash of two submitted values
@@ -50,7 +50,7 @@ const user_controller = controller({
       params.some_key = hash.digest("hex");
 
     },
-    on_validate : function (params) {
+    on_validate : async function (params) {
 
       if (params.email.length > 30) {
 
@@ -61,7 +61,7 @@ const user_controller = controller({
       console.log('passed on_validate hook');
 
     },
-    on_post_validate: function (params) {
+    on_post_validate: async function (params) {
 
       assert(params.some_key, "params should have a new value set from pre_validate hook");
 
@@ -71,7 +71,7 @@ const user_controller = controller({
       delete params.some_key;
 
     },
-    on_pre_query: function (params) {
+    on_pre_query: async function (params) {
 
       assert(!params.some_key, "some_key should be removed from on_post_validate hook");
 
@@ -81,7 +81,7 @@ const user_controller = controller({
       params.email = params.email.toLowerCase();
 
     },
-    on_query: function (params) {
+    on_query: async function (params) {
 
       const email = params.email || null;
 

@@ -37,7 +37,7 @@ function define_action (configs) {
       try {
 
         // if an error is thrown it is catched below
-        on_validate(params);
+        await on_validate(params);
 
       }
       catch (err) {
@@ -65,11 +65,11 @@ function define_action (configs) {
       var result = await on_query(params);
       
       // alter results if callback is provided
-      on_post_query && result.then(function (pre_result) {
+      on_post_query && result.then(async function (pre_result) {
         
         // call the post_query within promise. Do not forget
         // to return your altered result. 
-        pre_result = on_post_query(params, pre_result);
+        pre_result = await on_post_query(params, pre_result);
 
         return pre_result;
 
