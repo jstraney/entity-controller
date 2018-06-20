@@ -1,120 +1,169 @@
 //// Controller Unit Tests ////
-const controller = require('../index.js');
-
 const assert = require('assert');
 
-// used in examples
-const crypto = require('crypto');
+const fixtures = require('test/fixtures');
 
-console.log("\n\nRunning unit test on " + new Date().toString() + ". Buckle up, nerd.");
+const axios = require('axios');
 
-// in actual use, you simply open a connection to mongo, mysql,
-// wherever your data is stored
-const users_data = { 
-  "test1@gmail.com" : {
-    username: "test1",
-    favorite_color: "red",
-  },
-  "test2@gmail.com" : {
-    username: "test2",
-    favorite_color: "blue",
-  },
-  "test3@gmail.com" : {
-    username: "test3",
-    favorite_color: "green",
-  }
-};
+const {spawn} = require('child_process');
 
-// each action has its own hooks (callbacks if you prefer)
-// called in this order:
-// on_pre_validate
-// on_validate
-// on_post_validate
-// on_pre_query
-// on_query
-// on_post_query
-//
-// each action is guaranteed to return a promise, as they are
-// treated as async when passed in.
-const user_controller = controller({
-  read: {
-    on_pre_validate: async function (params) {
+// rejects has been added as of nodejs v10. this is just a polyfill if you're using
+// an older version. inspired by this stack overflow post
+// https://bit.ly/2sAdMh9
+assert.rejects = assert.rejects || (async (promise, regExp, message) => {
 
-      // derive parameters from input, just a non practical example
-      // but you could, take a hash of two submitted values
-      const hash = crypto.createHash("sha256");
+  var result, fn;
 
-      // note to noobs, this is not an encryption example
-      hash.update(params.email);
-      hash.update(crypto.randomBytes(32));
-      params.some_key = hash.digest("hex");
+  try {
 
-    },
-    on_validate : async function (params) {
+    result = await promise();
 
-      if (params.email.length > 30) {
+  } catch(e) {
 
-        throw new Error("e-mail must be under 60 characters");
+    fn = () => { throw e };
 
-      }
+  } 
 
-      console.log('passed on_validate hook');
+  assert.throws(fn, regExp, message);
 
-    },
-    on_post_validate: async function (params) {
-
-      assert(params.some_key, "params should have a new value set from pre_validate hook");
-
-      console.log('passed on_pre_validate hook');
-
-      // remove it if you want
-      delete params.some_key;
-
-    },
-    on_pre_query: async function (params) {
-
-      assert(!params.some_key, "some_key should be removed from on_post_validate hook");
-
-      console.log('passed on_post_validate hook');
-
-      // you can transform params by reference
-      params.email = params.email.toLowerCase();
-
-    },
-    on_query: async function (params) {
-
-      const email = params.email || null;
-
-      assert(email[0] == 't', 'email should be transformed lowercase by pre_query hook');
-
-      console.log('passed on_pre_query hook');
-
-      // don't forget to return results
-      return users_data[email];
-
-    },
-  }
 });
 
 
-(async function test_read () {
+// as a corollary, I wrote this one too
+assert.doesNotReject = assert.doesNotReject || (async (promise, regExp, message) => {
 
-  // uppercase query is transformed by on_pre_query callback
-  const test2 = await user_controller.read({email : "TEST2@gmail.com"});
+  var result;
 
-  const tester = await user_controller.read({
-      email : "TEST21312312412412411513513535131231@gmail.com"
-  })
-  .catch(function (err) {
+  try {
 
-    assert(err.constructor === Error, "query should throw error. email too long");
+    result = await promise();
 
+  }
+  catch (e) {
+
+    throw new Error(message); 
+
+  }
+
+});
+
+
+// set up the client driver
+const client = axios.create({
+  baseURL: 'http://localhost:3000'
+});
+
+
+// start up the application as a separate process
+var server; 
+
+const start_server = async () => {
+
+  // will spin up server stub in separate process
+  server = spawn('export NODE_PATH=. && node test/server', [], {
+    stdio    : 'inherit',
+    shell    : true,
   });
 
-  assert(test2.favorite_color == 'blue', 'result should be returned from controller action');
+};
 
-  console.log('action returns the result as expected');
 
-  console.log('all tests passed');
+const log_result = (message) => {
 
-})();
+  return (result) => {
+
+    result = result || {};
+
+    const data = result.data || result.message || "";
+
+    console.log(message, data);
+  } 
+
+};
+
+
+const send_client_requests = async () => {
+
+  const {test_requests} = fixtures;
+
+  console.log('client ready to send requests'); 
+
+  test_requests.forEach((test_request, index) => {
+
+    const {test_case, url, passes} = test_request;
+
+    // if the test case claims to pass, expect it not to reject
+    if (passes) {
+
+      assert.doesNotReject(async () => {
+
+        const result = await client.get(url)
+        .then(log_result(test_case + ' succeeded'))
+        .catch((e) => {
+
+          const message = e.response && e.response.data.message? e.response.data.message : e.message;
+
+          console.error(e);
+
+          throw e;
+
+        });
+
+      }, Error, test_case + ' was rejected but should be fullfilled');
+
+    }
+    // if test case fails, expect a Promise rejection
+    else {
+
+      assert.rejects(async () => {
+
+        await client.get(url)
+        .catch((e) => {
+
+          const message = e.response && e.response.data.message? e.response.data.message : e.message;
+
+          console.error(test_case + ': error thrown as expected - ', message);
+
+          throw e;
+
+        });
+
+      }, Error, test_case + ' did not reject as expected');
+
+    }
+
+  });
+  
+};
+
+
+const stop_server = async (e) => {
+
+  e.constructor === Error &&
+    console.error(e);
+
+  // send signal interupt
+  server.kill('SIGINT');
+
+};
+
+
+// spawn is done asynchronously, and there's
+// no simple way to check if the process
+// has successfully opened a port
+start_server()
+.catch(stop_server);
+
+// could spawn another process on an interval
+// like lsof -i :<application_port>, but no
+
+// for that reason, I set a simple timeout
+// to begin sending requests after 2.5 sec
+setTimeout(async () => {
+
+  // probably ok to send out requests now
+  send_client_requests()
+  .then(stop_server)
+  .catch(stop_server)
+
+}, 2500);

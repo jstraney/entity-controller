@@ -117,24 +117,36 @@ function configure (actions) {
 
     };
 
-    // allow a function to be passed which is called on success. Assumed to be
-    // some background process that doesn't involve sending headers back to client
-    // for instance, you may want to save a file to your server only after a successful
-    // request from the client and a write to your DB. this callback will only have the
-    // request and the result sets from the action to prevent an error from resending
-    // the headers
+    // called after response is sent. remember not to resend headers! could be
+    // used to clean something up
     const on_post_result = configs.on_post_result || null;
 
     // handle error as json response
     const on_err = configs.on_err || function (req, res, err) {
 
-      console.error(err);
+      // some people might check the body of request, others use catch when
+      // requesting (preferred). Just giving info any way to show something
+      // went wrong.
+      const response = {success: false};
 
-      if (typeof err === 'string')
-        res.status(400).json({success: false, message: err});
+      let message;
+      
+      if (typeof err === "object") {
 
-      else if (typeof err === 'object')
-        res.status(400).json(err);
+        response.code = err.code || undefined;
+
+        response.message = err.message || 'An unexpected error has occurred';
+
+      }
+      else {
+
+        // accept a string as response too
+        response.message = err;
+
+      }
+
+      res.status(400).json(response);
+
 
     };
 
@@ -149,22 +161,16 @@ function configure (actions) {
 
       var params = {};
 
-      if (req.body && Object.keys(req.body).length) {
-
+      if (req.body && Object.keys(req.body).length) 
         params = Object.assign(params, req.body);
 
-      }
       // sometimes params and queries get used together
-      if (req.query && Object.keys(req.query).length) {
-
+      if (req.query && Object.keys(req.query).length)
         params = Object.assign(params, req.query);
 
-      }
-      if (req.params && typeof req.params == "object") {
-
+      if (req.params && typeof req.params == "object")
         params = Object.assign(params, req.params);
 
-      }
 
       controller[action](params)
       .then(function (result) {
