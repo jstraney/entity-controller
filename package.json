@@ -1,6 +1,6 @@
 {
   "name": "entity-controller",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "general purpose entity controller which allows the injection of various hooks",
   "main": "index.js",
   "directories": {
