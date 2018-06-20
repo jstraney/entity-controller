@@ -130,7 +130,11 @@ function configure (actions) {
 
       console.error(err);
 
-      res.json(err);
+      if (typeof err === 'string')
+        res.status(400).json({success: false, message: err});
+
+      else if (typeof err === 'object')
+        res.status(400).json(err);
 
     };
 
