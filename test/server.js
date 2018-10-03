@@ -50,6 +50,8 @@ actions.create.on_query = async (params) => {
 
   users_data.push({email, username, favorite_color});
 
+  console.log(users_data);
+
   // id of created user
   return {id : users_data.length - 1};
 
@@ -68,6 +70,8 @@ app.use(express.json());
 
 // uses default handlers for middleware 'on_result', 'on_err'
 app.get('/users/:id', handle_action('read'));
+
+app.post('/user', handle_action('create'));
 
 app.listen(3000, '127.0.0.1', () => {
 

@@ -127,15 +127,24 @@ function configure (actions) {
       // some people might check the body of request, others use catch when
       // requesting (preferred). Just giving info any way to show something
       // went wrong.
-      const response = {success: false};
+      let response = {};
 
       let message;
       
-      if (typeof err === "object") {
+      // support standard errors
+      if (err.constructor && err.constructor === Error) {
 
+        // we will exclude the entire trace which may contain
+        // sensitive and unecessary information
         response.code = err.code || undefined;
 
         response.message = err.message || 'An unexpected error has occurred';
+
+      }
+      // support regular json object
+      else if (typeof err === "object") {
+
+        response = Object.assign({}, err);
 
       }
       else {
@@ -146,7 +155,6 @@ function configure (actions) {
       }
 
       res.status(400).json(response);
-
 
     };
 

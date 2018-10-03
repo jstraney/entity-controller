@@ -90,14 +90,14 @@ const send_client_requests = async () => {
 
   test_requests.forEach((test_request, index) => {
 
-    const {test_case, url, passes} = test_request;
+    const {test_case, http_options, passes} = test_request;
 
     // if the test case claims to pass, expect it not to reject
     if (passes) {
 
       assert.doesNotReject(async () => {
 
-        const result = await client.get(url)
+        const result = await client(http_options)
         .then(log_result(test_case + ' succeeded'))
         .catch((e) => {
 
@@ -117,7 +117,7 @@ const send_client_requests = async () => {
 
       assert.rejects(async () => {
 
-        await client.get(url)
+        await client(http_options)
         .catch((e) => {
 
           const message = e.response && e.response.data.message? e.response.data.message : e.message;

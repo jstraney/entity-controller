@@ -29,28 +29,47 @@ fixtures.users = [
 fixtures.test_requests = [
   {
     test_case: "valid_get_0",
-    url: "/users/0",
+    http_options: { 
+      url: "/users/0",
+    },
     passes: true
   },
   {
     test_case: "valid_get_1",
-    url: "/users/1",
+    http_options: { 
+      url: "/users/1",
+    },
     passes: true
   },
   {
     test_case: "valid_get_2",
-    url: "/users/2",
-    passes: true
+    http_options: { 
+      url: "/users/2",
+    },
+    passes: true,
   },
   {
     test_case: "valid_get_3",
-    url: "/users/3",
+    http_options: { 
+      url: "/users/3",
+    },
     passes: true
   },
   {
     test_case: "invalid_get_0",
-    url: "/users/foo",
-    passes: false
+    passes: false,
+    http_options: { 
+      url: "/users/foo",
+    },
+  },
+  {
+    test_case: "body_data_0",
+    http_options: {
+      url: "/user",
+      data: {email: "test4@gmail.com", username: "test4"},
+      method: "post"
+    },
+    passes: true
   }
 ];
 
