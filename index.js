@@ -124,10 +124,12 @@ function configure (actions) {
     // handle error as json response
     const on_err = configs.on_err || function (req, res, err) {
 
+      err = err || {};
+
       // some people might check the body of request, others use catch when
       // requesting (preferred). Just giving info any way to show something
       // went wrong.
-      let response = {};
+      let response = Object.assign({}, err);
 
       let message;
       
@@ -139,18 +141,6 @@ function configure (actions) {
         response.code = err.code || undefined;
 
         response.message = err.message || 'An unexpected error has occurred';
-
-      }
-      // support regular json object
-      else if (typeof err === "object") {
-
-        response = Object.assign({}, err);
-
-      }
-      else {
-
-        // accept a string as response too
-        response.message = err;
 
       }
 
